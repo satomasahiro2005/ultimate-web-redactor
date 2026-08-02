@@ -276,7 +276,7 @@
     const m = resolveMode(mode);
     // 赤枠は要素に outline を引くと親の overflow で切れるので、常に重ねて描く
     if (m === 'frame') return frameRects(el.getBoundingClientRect(), { anchor: el });
-    const id = register(el, wrapped ? 'wrap' : 'element', m);
+    const id = register(el, wrapped ? 'wrap' : 'element', m, { fixed: false });
     paintHide(el, m);
     return id;
   }
@@ -307,7 +307,7 @@
     if (m === 'frame') return frameRects(r, { fixed: true });
 
     const el = newOverlay();
-    const id = register(el, 'overlay', m);
+    const id = register(el, 'overlay', m, { fixed: true });
     let look;
     if (m === 'solid') {
       look = 'background:#000 !important;border:0 !important;border-radius:2px !important;';
@@ -337,7 +337,7 @@
     const box = unionRect(Array.isArray(rectOrRects) ? rectOrRects : [rectOrRects]);
     if (!box) return null;
     const el = newOverlay();
-    const id = register(el, 'overlay', 'frame', { anchor, fixed });
+    const id = register(el, 'overlay', 'frame', { anchor, fixed: !!fixed });
     placeFrame(el, box, fixed);
     return id;
   }
@@ -497,6 +497,7 @@
   /* ---------- 画面上のUI ---------- */
 
   let overlayUi = null;
+  let toggleRect = null;   // 矩形モード中だけ入る
 
   const modeLabel = (m) => (m === 'frame'
     ? t('modeFrame', 'Red box')
@@ -512,14 +513,22 @@
     sr.innerHTML = `
 <style>
   .box { position:fixed; display:none; pointer-events:none;
-         border:2px solid #ffffff; outline:2px solid #1a73e8; outline-offset:0;
-         box-shadow: 0 0 0 9999px rgba(0,0,0,.28), 0 0 12px rgba(26,115,232,.9);
-         background:rgba(26,115,232,.10); }
+         border:2px solid #4c8dff; background:rgba(76,141,255,.16); border-radius:3px; }
+  .mark { position:fixed; pointer-events:none; border-radius:2px; }
+  .mark.f { outline:2px dashed #ffb020; background:rgba(255,176,32,.13); }
+  .mark.a { outline:2px dashed #35d07f; background:rgba(53,208,127,.13); }
+  .legend { display:flex; align-items:center; gap:10px; color:#9fb0c9; }
+  .legend i { display:inline-block; width:9px; height:9px; border-radius:2px;
+              margin-right:5px; vertical-align:-1px; }
+  .legend .f i { background:#ffb020; }
+  .legend .a i { background:#35d07f; }
   .bar { position:fixed; left:50%; bottom:24px; transform:translateX(-50%);
          display:flex; align-items:center; gap:8px;
          font:13px/1 system-ui,"Segoe UI","Yu Gothic UI",sans-serif; color:#fff;
-         background:rgba(20,22,28,.95); padding:7px 8px 7px 12px; border-radius:10px;
-         box-shadow:0 6px 20px rgba(0,0,0,.45); white-space:nowrap; pointer-events:auto; }
+         background:#14161c; padding:7px 8px 7px 12px; border-radius:12px;
+         border:2px solid #5b8dff;
+         box-shadow:0 0 0 2px rgba(0,0,0,.55), 0 0 18px rgba(91,141,255,.55), 0 10px 28px rgba(0,0,0,.5);
+         white-space:nowrap; pointer-events:auto; }
   .bar button { font:inherit; color:#cfd8e6; background:transparent; cursor:pointer;
                 border:1px solid rgba(255,255,255,.22); border-radius:6px; padding:5px 10px; }
   .bar button:hover { border-color:#8fb8ff; color:#fff; }
@@ -539,6 +548,7 @@
     if (!overlayUi) return;
     const done = overlayUi;
     overlayUi = null;
+    toggleRect = null;
     done();
   }
 
@@ -620,14 +630,48 @@
       <button data-m="hide">${t('modeHide', 'Hide')}</button>
       <button data-m="frame">${t('modeFrame', 'Red box')}</button>
       <span class="sep"></span>
+      <span class="legend" hidden>
+        <span class="f"><i></i>${t('legendWindow', 'window')}</span>
+        <span class="a"><i></i>${t('legendElement', 'element')}</span>
+      </span>
       <span class="hint">${t('hintRect', 'drag to box it / click to finish')}</span>
       <button class="x" aria-label="close">✕</button>`);
+
+    // すでに適用してあるところを見せる。追従先で色を分ける
+    const legend = bar.querySelector('.legend');
+    const marks = [];
+    const drawMarks = () => {
+      for (const m of marks) m.remove();
+      marks.length = 0;
+      for (const rec of records.values()) {
+        if (!rec.el.isConnected) continue;
+        const r = rec.el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) continue;
+        const m = document.createElement('div');
+        m.className = `mark ${rec.fixed ? 'f' : 'a'}`;
+        m.style.left = `${r.left}px`;
+        m.style.top = `${r.top}px`;
+        m.style.width = `${r.width}px`;
+        m.style.height = `${r.height}px`;
+        sr.appendChild(m);
+        marks.push(m);
+      }
+      legend.hidden = marks.length === 0;
+    };
+    drawMarks();
 
     const syncBar = () => {
       for (const b of bar.querySelectorAll('button[data-m]')) {
         b.setAttribute('aria-pressed', String(b.dataset.m === current));
       }
     };
+    const setMode = (m) => {
+      current = m;
+      settings.mode = m;
+      try { chrome.storage.local.set({ mode: m }); } catch (_) { /* テスト時 */ }
+      syncBar();
+    };
+    toggleRect = () => setMode(current === 'frame' ? 'hide' : 'frame');
     syncBar();
 
     bar.addEventListener('mousedown', (e) => e.stopPropagation(), true);
@@ -636,10 +680,7 @@
       const b = e.target.closest('button');
       if (!b) return;
       if (b.classList.contains('x')) { closeUi(); return; }
-      current = b.dataset.m;
-      settings.mode = current;
-      try { chrome.storage.local.set({ mode: current }); } catch (_) { /* テスト時 */ }
-      syncBar();
+      setMode(b.dataset.m);
     }, true);
 
     let start = null;
@@ -677,19 +718,30 @@
       // ドラッグしていなければただのクリック。モードを抜ける
       if (!moved || r.width < 6 || r.height < 6) { closeUi(); return; }
       applyRect(r, current);
+      drawMarks();
     };
     const onKey = (ev) => {
-      if (ev.key === 'Escape') { ev.preventDefault(); closeUi(); }
+      if (ev.key === 'Escape') { ev.preventDefault(); closeUi(); return; }
+      // モード中は E でモザイクと赤枠を行き来する
+      if ((ev.key === 'e' || ev.key === 'E') && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        toggleRect();
+      }
     };
 
     host.addEventListener('mousedown', onDown, true);
     window.addEventListener('mousemove', onMove, true);
     window.addEventListener('mouseup', onUp, true);
     document.addEventListener('keydown', onKey, true);
+    window.addEventListener('scroll', drawMarks, true);
+    window.addEventListener('resize', drawMarks, true);
     overlayUi = () => {
       window.removeEventListener('mousemove', onMove, true);
       window.removeEventListener('mouseup', onUp, true);
       document.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('scroll', drawMarks, true);
+      window.removeEventListener('resize', drawMarks, true);
       host.remove();
     };
   }
@@ -715,7 +767,10 @@
       case 'apply-selection': return { count: applySelection(msg.mode) };
       case 'apply-src':       return { count: applyBySrc(msg.srcUrl, msg.mode) };
       case 'pick':            startPicker(msg.mode); return { ok: true };
-      case 'rect':            startRect(msg.mode); return { ok: true };
+      // 矩形モード中にもう一度呼ばれたら切り替えとして扱う
+      case 'rect':
+        if (toggleRect) toggleRect(); else startRect(msg.mode);
+        return { ok: true };
       case 'undo':            return { ok: undo() };
       case 'reveal-all':      closeUi(); return { count: releaseAll() };
       case 'ping':            return { ok: true, applied: records.size };

@@ -39,6 +39,8 @@
   "sample":         { "message": "Sample テキスト 0123" },
 
   "hintPick":       { "message": "クリックで適用 / ↑ 親 ↓ 子 / Esc 中止" },
+  "legendWindow":   { "message": "窓に固定" },
+  "legendElement":  { "message": "要素に追従" },
   "hintRect":       { "message": "ドラッグで囲む / クリックで終了" },
   "titleRemove":    { "message": "クリックで解除" },
   "titleRemoveBox": { "message": "クリックで枠を消す" }

@@ -39,6 +39,8 @@
   "sample":         { "message": "Sample text 0123" },
 
   "hintPick":       { "message": "click to apply / ↑ parent ↓ child / Esc to cancel" },
+  "legendWindow":   { "message": "window" },
+  "legendElement":  { "message": "element" },
   "hintRect":       { "message": "drag to box it / click to finish" },
   "titleRemove":    { "message": "Click to remove" },
   "titleRemoveBox": { "message": "Click to remove the box" }
