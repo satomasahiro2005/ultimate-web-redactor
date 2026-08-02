@@ -36,6 +36,9 @@ manifest v3。ライブラリ依存なし。ホスト権限を持たず、右ク
 Windows の入力言語切り替えと当たるので避けてある。ポップアップに出るキー表示は
 `chrome.commands.getAll()` の実際の割り当てを読んでいるので、変えればそのまま反映される。
 
+選択範囲から作った赤枠は、あとからページの拡大率を変えるとずれる。対応しないので
+[#1](https://github.com/satomasahiro2005/ultimate-web-redactor/issues/1) に理由を書いてある。
+
 ## 調整できるもの
 
 | | 調整 |
