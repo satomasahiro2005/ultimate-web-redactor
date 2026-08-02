@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Web Mosaic Next - test harness</title>
+<style>
+  html, body { background:#fff; }
+  body { font: 15px/1.9 system-ui,"Yu Gothic UI",sans-serif; margin: 0; padding: 24px 32px; color:#222; }
+  .bar { position: sticky; top: 0; background:#fff; border-bottom:1px solid #ddd; padding:10px 0; margin-bottom:18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .bar button { padding:6px 12px; }
+  article { max-width: 760px; }
+  .card { border:1px solid #ccd; border-radius:8px; padding:14px 18px; margin:16px 0; background:#f7f9fc; }
+  table { border-collapse: collapse; }
+  td, th { border:1px solid #ccd; padding:6px 12px; }
+  img { border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="bar">
+  モード:
+  <select id="mode">
+    <option value="mosaic">モザイク</option>
+    <option value="blur">ぼかし</option>
+    <option value="solid">黒塗り</option>
+    <option value="frame">赤枠</option>
+  </select>
+  px: <input id="size" type="range" min="1" max="40" value="9"><output id="sv">9</output>
+  <button id="apply">選択範囲に適用</button>
+  <button id="rect">矩形</button>
+  <button id="pick">要素ピッカー</button>
+  <button id="reset">すべて解除</button>
+  <span id="log"></span>
+</div>
+
+<article>
+  <h2>テスト用サンプル</h2>
+  <p id="p1">ここは<strong>強調を含む</strong>段落です。<a href="https://example.com">リンクもある</a>ので、
+     クリックの挙動も確認できます。API キーは <code>sk-live-9f2c81aa77b4</code> のような形で埋まっています。</p>
+
+  <div class="card">
+    <p>カード内のテキスト。<em>複数のノードにまたがる選択</em>を作って、境界の分割が正しく効くか見る。</p>
+    <table>
+      <tr><th>名前</th><th>メール</th></tr>
+      <tr><td>佐藤</td><td>sato@example.com</td></tr>
+      <tr><td>鈴木</td><td>suzuki@example.com</td></tr>
+    </table>
+  </div>
+
+  <p>画像も対象:
+    <img id="img1" width="160" height="90" alt="sample"
+         src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='90'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff9a3c'/><stop offset='1' stop-color='%233c7bff'/></linearGradient></defs><rect width='160' height='90' fill='url(%23g)'/><text x='80' y='52' font-size='22' text-anchor='middle' fill='white' font-family='sans-serif'>PHOTO</text></svg>">
+  </p>
+
+  <p>長い文章のなかの一部だけを選ぶケース。あいうえお かきくけこ さしすせそ たちつてと なにぬねの
+     はひふへほ まみむめも やゆよ らりるれろ わをん。ABCDEFG HIJKLMN OPQRSTU VWXYZ 0123456789.</p>
+</article>
+
+<script src="../src/content.js"></script>
+<script>
+const api = window.__ultimateWebRedactor;
+const $ = (id) => document.getElementById(id);
+const sync = () => {
+  const n = Number($('size').value);
+  const m = $('mode').value;
+  api.settings = {
+    mode: m,
+    hideMode: m === 'frame' ? 'mosaic' : m,
+    mosaicPx: n, blurPx: n,
+    frameWidth: 5, framePad: 5, frameRadius: 0,
+    frameColor: '#ff2d2d', lock: false
+  };
+  $('sv').textContent = n;
+};
+$('mode').addEventListener('change', sync);
+$('size').addEventListener('input', sync);
+
+// ボタン押下で選択が消えないように
+for (const id of ['apply','rect','pick','reset']) {
+  $(id).addEventListener('mousedown', (e) => e.preventDefault());
+}
+$('apply').addEventListener('click', () => { sync(); $('log').textContent = 'applied: ' + api.handle({type:'apply-selection', mode:$('mode').value}).count; });
+$('rect').addEventListener('click', () => { sync(); api.handle({type:'rect', mode:$('mode').value}); });
+$('pick').addEventListener('click', () => { sync(); api.handle({type:'pick', mode:$('mode').value}); });
+$('reset').addEventListener('click', () => { $('log').textContent = 'released: ' + api.handle({type:'reveal-all'}).count; });
+sync();
+</script>
+</body>
+</html>

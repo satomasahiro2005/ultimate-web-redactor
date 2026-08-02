@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ultimate Web Redactor - promo</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1280px; height: 800px; overflow: hidden;
+               background: #eef1f6; font: 14px/1.55 "Segoe UI", system-ui, sans-serif; color: #1d2330; }
+  .caption { height: 96px; display: flex; flex-direction: column; justify-content: center;
+             padding: 0 40px; background: #12161f; color: #fff; }
+  .caption h2 { margin: 0; font-size: 25px; font-weight: 650; letter-spacing: .01em; }
+  .caption p { margin: 5px 0 0; font-size: 14.5px; color: #9fb0c9; }
+  .stage { position: relative; height: 704px; padding: 22px 32px; }
+  .win { height: 100%; background: #fff; border-radius: 10px; overflow: hidden;
+         box-shadow: 0 10px 30px rgba(20,30,50,.16); display: grid; grid-template-columns: 210px 1fr; }
+
+  aside { background: #1b2130; color: #c8d3e4; padding: 18px 0; }
+  .brand { display: flex; align-items: center; gap: 9px; padding: 0 18px 16px; font-weight: 650; color: #fff; font-size: 15px; }
+  .brand i { width: 18px; height: 18px; border-radius: 5px; background: linear-gradient(135deg,#5b8dff,#9a6cff); display: block; }
+  aside a { display: block; padding: 8px 18px; color: #a9b7cc; text-decoration: none; font-size: 13.5px; }
+  aside a.on { background: #273043; color: #fff; border-left: 3px solid #5b8dff; padding-left: 15px; }
+
+  main { padding: 22px 26px; overflow: hidden; }
+  h1 { margin: 0 0 3px; font-size: 19px; }
+  .sub { margin: 0 0 18px; color: #6b7789; font-size: 13px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+  .card { border: 1px solid #e2e7ef; border-radius: 8px; padding: 12px 14px; background: #fbfcfe; }
+  .card .k { color: #6b7789; font-size: 12px; }
+  .card .v { font-size: 20px; font-weight: 650; margin-top: 2px; }
+  .card .v small { font-size: 12px; font-weight: 400; color: #6b7789; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; color: #6b7789; font-weight: 600; font-size: 12px;
+       border-bottom: 1px solid #e2e7ef; padding: 8px 10px; }
+  td { padding: 9px 10px; border-bottom: 1px solid #eff2f7; }
+  .who { display: flex; align-items: center; gap: 9px; }
+  .av { width: 26px; height: 26px; border-radius: 50%; flex: none; }
+  code { font: 12.5px ui-monospace, Consolas, monospace; background: #f1f4f9;
+         padding: 2px 6px; border-radius: 4px; }
+  .tag { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: #e8effc; color: #2f5fbf; }
+  .keys { margin-top: 16px; border: 1px solid #e2e7ef; border-radius: 8px; padding: 12px 14px; max-width: 640px; }
+  .keys h3 { margin: 0 0 8px; font-size: 13px; color: #6b7789; font-weight: 600; }
+  .keyrow { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; }
+
+  iframe#popup { position: absolute; right: 46px; bottom: 18px; width: 280px; height: 486px;
+                 border: 0; border-radius: 10px; background: #fff;
+                 box-shadow: 0 14px 40px rgba(15,25,45,.32); }
+  .modes-demo td { font-size: 13.5px; }
+  .modes-demo .lbl { color: #6b7789; font-size: 12px; width: 130px; }
+</style>
+</head>
+<body>
+<div class="caption"><h2 id="capTitle"></h2><p id="capSub"></p></div>
+<div class="stage">
+  <div class="win">
+    <aside>
+      <div class="brand"><i></i> Lumen Console</div>
+      <a href="#">Overview</a>
+      <a href="#" class="on">Team</a>
+      <a href="#">API keys</a>
+      <a href="#">Billing</a>
+      <a href="#">Audit log</a>
+      <a href="#">Settings</a>
+    </aside>
+    <main>
+      <h1>Team</h1>
+      <p class="sub">6 members · workspace lumen-demo</p>
+
+      <div class="cards">
+        <div class="card"><div class="k">Seats used</div><div class="v">6 <small>/ 10</small></div></div>
+        <div class="card"><div class="k">Monthly spend</div><div class="v" id="spend">$1,284.00</div></div>
+        <div class="card"><div class="k">Next invoice</div><div class="v" id="inv">INV-20418</div></div>
+      </div>
+
+      <table id="members">
+        <tr><th>Member</th><th>Email</th><th>Role</th><th>Last seen</th></tr>
+      </table>
+
+      <div class="keys">
+        <h3>API keys</h3>
+        <div class="keyrow"><span>Production</span><code id="k1">lk_live_8f2c81aa77b4d3e9</code></div>
+        <div class="keyrow"><span>Staging</span><code id="k2">lk_test_41ba90cc25de7f10</code></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../src/content.js"></script>
+<script src="scenes.js"></script>
+</body>
+</html>

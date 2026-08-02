@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 440px; height: 280px; overflow: hidden;
+               background: #12161f; color: #fff;
+               font: 14px/1.5 "Segoe UI", system-ui, sans-serif; }
+  .wrap { height: 100%; padding: 26px 28px; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+  .top { display: flex; align-items: center; gap: 14px; }
+  .top img { width: 56px; height: 56px; image-rendering: pixelated; border-radius: 6px; }
+  .name { font-size: 21px; font-weight: 680; letter-spacing: .01em; }
+  .tag { font-size: 12.5px; color: #93a5c0; margin-top: 2px; }
+  .strip { background: #1b2130; border-radius: 8px; padding: 12px 14px; }
+  .line { display: flex; align-items: center; gap: 10px; font: 13px ui-monospace, Consolas, monospace; }
+  .line + .line { margin-top: 8px; }
+  .line span.k { color: #7f8ea6; width: 74px; flex: none; font-family: "Segoe UI", sans-serif; font-size: 11.5px; }
+  .val { color: #dfe7f3; }
+  svg#defs { position: absolute; width: 0; height: 0; }
+</style>
+</head>
+<body>
+<svg id="defs" aria-hidden="true"></svg>
+<div class="wrap">
+  <div class="top">
+    <img src="../icons/icon128.png" alt="">
+    <div>
+      <div class="name">Ultimate Web Redactor</div>
+      <div class="tag">Hide it, or point at it. Right on the page.</div>
+    </div>
+  </div>
+  <div class="strip">
+    <div class="line"><span class="k">before</span><span class="val">ava.lindqvist@lumen-demo.test</span></div>
+    <div class="line"><span class="k">pixelate</span><span class="val" id="a">ava.lindqvist@lumen-demo.test</span></div>
+    <div class="line"><span class="k">black out</span><span class="val" id="b">ava.lindqvist@lumen-demo.test</span></div>
+  </div>
+</div>
+<script src="../src/content.js"></script>
+<script>
+  const api = window.__ultimateWebRedactor;
+  api.settings = { mode:'mosaic', hideMode:'mosaic', mosaicPx:8, blurPx:7,
+                   frameWidth:5, framePad:5, frameRadius:0, frameColor:'#ff2d2d', lock:true };
+  api.applyTo(document.getElementById('a'), { mode: 'mosaic' });
+  api.applyTo(document.getElementById('b'), { mode: 'solid' });
+</script>
+</body>
+</html>

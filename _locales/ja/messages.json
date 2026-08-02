@@ -1,0 +1,44 @@
+{
+  "appName":        { "message": "Ultimate Web Redactor" },
+  "appDesc":        { "message": "ページの好きなところをモザイク・ぼかし・黒塗りで隠し、赤枠で目立たせる。ドラッグで囲むだけ。" },
+
+  "cmdHide":        { "message": "選択範囲を隠す" },
+  "cmdFrame":       { "message": "選択範囲を赤枠で囲む" },
+  "cmdRect":        { "message": "矩形で囲む" },
+  "cmdPick":        { "message": "要素を選んで適用" },
+  "cmdReveal":      { "message": "このページの加工をすべて解除" },
+
+  "menuHideSel":    { "message": "選択範囲を隠す" },
+  "menuFrameSel":   { "message": "選択範囲を赤枠で囲む" },
+  "menuHideMedia":  { "message": "この画像/動画を隠す" },
+  "menuFrameMedia": { "message": "この画像/動画を赤枠で囲む" },
+  "menuReveal":     { "message": "このページの加工をすべて解除" },
+
+  "modeMosaic":     { "message": "モザイク" },
+  "modeBlur":       { "message": "ぼかし" },
+  "modeSolid":      { "message": "黒塗り" },
+  "modeFrame":      { "message": "赤枠" },
+
+  "labelBlock":     { "message": "ブロック" },
+  "labelBlur":      { "message": "ぼかし" },
+  "labelWidth":     { "message": "太さ" },
+  "labelPad":       { "message": "余白" },
+  "labelRadius":    { "message": "角丸" },
+  "labelColor":     { "message": "色" },
+  "solidHint":      { "message": "塗り潰すだけなので調整はなし。" },
+  "lockLabel":      { "message": "クリックで消せないようにする" },
+
+  "btnRect":        { "message": "矩形で囲む" },
+  "btnSelection":   { "message": "選択範囲に適用" },
+  "btnPick":        { "message": "要素を選んで適用" },
+  "btnReveal":      { "message": "すべて解除" },
+
+  "sample":         { "message": "Sample テキスト 0123" },
+  "note1":          { "message": "加工した部分はクリックで消える。矩形はウィンドウ基準の固定位置なので、スクロールしても動かない。" },
+  "note2":          { "message": "モザイクとぼかしは復元できることがある。確実に隠すなら黒塗りを。" },
+
+  "hintPick":       { "message": "クリックで適用 / ↑ 親 ↓ 子 / Esc 中止" },
+  "hintRect":       { "message": "ドラッグで囲む / 続けて何個でも / Esc 終了" },
+  "titleRemove":    { "message": "クリックで解除" },
+  "titleRemoveBox": { "message": "クリックで枠を消す" }
+}

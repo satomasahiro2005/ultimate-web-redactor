@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>popup (chrome API あり) の再現</title>
+<style>body{margin:0;background:#2a2d33}</style>
+<script src="chrome-shim.js"></script>
+</head>
+<body>
+<script>
+window.__errors = [];
+window.addEventListener('error', (e) => window.__errors.push(`${e.message} @ ${e.filename}:${e.lineno}:${e.colno}`));
+window.addEventListener('unhandledrejection', (e) => window.__errors.push('rejection: ' + e.reason));
+
+(async () => {
+  const html = await (await fetch('../src/popup.html')).text();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="../src/popup.css">');
+  document.body.innerHTML = doc.body.innerHTML.replace(/<script[\s\S]*?<\/script>/g, '');
+  try {
+    window.__shimMessages = await (await fetch('../_locales/en/messages.json')).then(r => r.json());
+  } catch (_) { /* i18n 未導入なら無視 */ }
+  const s = document.createElement('script');
+  s.src = '../src/popup.js';
+  document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>

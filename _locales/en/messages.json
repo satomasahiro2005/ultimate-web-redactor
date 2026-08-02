@@ -1,0 +1,44 @@
+{
+  "appName":        { "message": "Ultimate Web Redactor" },
+  "appDesc":        { "message": "Blur, pixelate or black out anything on a page, and put a red box around what matters. Just drag over it." },
+
+  "cmdHide":        { "message": "Hide the selection" },
+  "cmdFrame":       { "message": "Box the selection in red" },
+  "cmdRect":        { "message": "Draw a box" },
+  "cmdPick":        { "message": "Pick an element" },
+  "cmdReveal":      { "message": "Undo everything on this page" },
+
+  "menuHideSel":    { "message": "Hide the selection" },
+  "menuFrameSel":   { "message": "Box the selection in red" },
+  "menuHideMedia":  { "message": "Hide this image or video" },
+  "menuFrameMedia": { "message": "Box this image or video in red" },
+  "menuReveal":     { "message": "Undo everything on this page" },
+
+  "modeMosaic":     { "message": "Pixelate" },
+  "modeBlur":       { "message": "Blur" },
+  "modeSolid":      { "message": "Black out" },
+  "modeFrame":      { "message": "Red box" },
+
+  "labelBlock":     { "message": "Block" },
+  "labelBlur":      { "message": "Radius" },
+  "labelWidth":     { "message": "Width" },
+  "labelPad":       { "message": "Padding" },
+  "labelRadius":    { "message": "Corner" },
+  "labelColor":     { "message": "Color" },
+  "solidHint":      { "message": "Nothing to adjust. It just paints over." },
+  "lockLabel":      { "message": "Keep clicks from removing it" },
+
+  "btnRect":        { "message": "Draw a box" },
+  "btnSelection":   { "message": "Apply to selection" },
+  "btnPick":        { "message": "Pick an element" },
+  "btnReveal":      { "message": "Undo everything" },
+
+  "sample":         { "message": "Sample text 0123" },
+  "note1":          { "message": "Click anything you applied to remove it. Boxes sit at fixed window coordinates, so scrolling does not move them." },
+  "note2":          { "message": "Pixelate and blur can sometimes be reversed. Use black out when it really has to go." },
+
+  "hintPick":       { "message": "click to apply / ↑ parent ↓ child / Esc to cancel" },
+  "hintRect":       { "message": "drag to box it / as many as you like / Esc to finish" },
+  "titleRemove":    { "message": "Click to remove" },
+  "titleRemoveBox": { "message": "Click to remove the box" }
+}
