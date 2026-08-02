@@ -665,14 +665,23 @@
         b.setAttribute('aria-pressed', String(b.dataset.m === current));
       }
     };
+    // どちらのモードかは枠の色で見せる
+    const paintBar = () => {
+      const c = current === 'frame' ? settings.frameColor : '#5b8dff';
+      bar.style.borderColor = c;
+      bar.style.boxShadow = `0 0 0 2px rgba(0,0,0,.55),` +
+        ` 0 0 18px color-mix(in srgb, ${c} 55%, transparent), 0 10px 28px rgba(0,0,0,.5)`;
+    };
     const setMode = (m) => {
       current = m;
       settings.mode = m;
       try { chrome.storage.local.set({ mode: m }); } catch (_) { /* テスト時 */ }
       syncBar();
+      paintBar();
     };
     toggleRect = () => setMode(current === 'frame' ? 'hide' : 'frame');
     syncBar();
+    paintBar();
 
     bar.addEventListener('mousedown', (e) => e.stopPropagation(), true);
     bar.addEventListener('click', (e) => {
@@ -701,6 +710,8 @@
 
     const onDown = (ev) => {
       if (ev.button !== 0) return;
+      // host のキャプチャはバーより先に来る。バー上の操作でモードを抜けないようにする
+      if (ev.composedPath && ev.composedPath().includes(bar)) return;
       ev.preventDefault();
       start = { x: ev.clientX, y: ev.clientY };
       moved = false;
