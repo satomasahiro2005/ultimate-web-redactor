@@ -30,6 +30,20 @@ function localize() {
   }
 }
 
+/** ショートカットはユーザーが変えられるので、実際の割り当てを表示する。
+    Chrome が既定を採用できなかった場合はここが空になり、表示も消える。 */
+function showShortcuts() {
+  if (typeof chrome === 'undefined' || !chrome.commands) return;
+  chrome.commands.getAll((cmds) => {
+    const map = Object.fromEntries((cmds || []).map((c) => [c.name, c.shortcut]));
+    for (const kbd of document.querySelectorAll('kbd[data-cmd]')) {
+      const s = map[kbd.dataset.cmd];
+      if (s) kbd.textContent = s;
+      else kbd.hidden = true;
+    }
+  });
+}
+
 function pixelFilter(block) {
   const id = `px-${block}`;
   if (document.getElementById(id)) return id;
@@ -140,6 +154,7 @@ el('pickElement').addEventListener('click', () => relay({ type: 'pick', mode: se
 el('revealAll').addEventListener('click', () => relay({ type: 'reveal-all' }));
 
 localize();
+showShortcuts();
 store.get(DEFAULTS, (v) => {
   if (v) settings = { ...DEFAULTS, ...v };
   render();

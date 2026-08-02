@@ -31,9 +31,9 @@ FOUR WAYS TO TREAT A REGION
 • Red box — an outline that does not shift the layout, with adjustable width, padding, corner radius and colour
 
 THREE WAYS TO PICK WHAT TO COVER
-• Drag a box (Alt+Shift+R) — drag over anything at all. Boxes sit at fixed window coordinates, so scrolling never moves them, and you can draw as many as you like in a row.
-• Select text and use the right-click menu, or Alt+Shift+M to hide it and Alt+Shift+F to box it in red.
-• Pick an element (Alt+Shift+K) — for images, avatars and table rows that you cannot select as text. Arrow keys walk up and down the tree.
+• Drag a box (Ctrl+Shift+E) — drag over anything at all. Boxes sit at fixed window coordinates, so scrolling never moves them, and you can draw as many as you like in a row.
+• Select text and use the right-click menu, or Ctrl+Shift+Y to hide it and Ctrl+Shift+K to box it in red.
+• Pick an element (Ctrl+Shift+L) — for images, avatars and table rows that you cannot select as text. Arrow keys walk up and down the tree.
 
 Click anything you applied to remove it. "Undo everything" clears the page in one go. If you would rather not remove things by accident, there is a lock switch.
 
@@ -76,9 +76,9 @@ Ultimate Web Redactor は、撮る前にページの好きなところを覆い�
 ・赤枠 ― レイアウトを動かさない枠。太さ・余白・角丸・色を調整
 
 範囲の指定は3通り
-・矩形（Alt+Shift+R）― ドラッグで囲むだけ。ウィンドウ基準の固定座標なので、スクロールしても位置が動きません。続けて何個でも引けます。
-・選択範囲 ― テキストを選んで右クリック、または Alt+Shift+M で隠す / Alt+Shift+F で赤枠。
-・要素ピッカー（Alt+Shift+K）― 画像やアバター、表の1行など、テキストとして選べないもの用。↑↓ で親子をたどれます。
+・矩形（Ctrl+Shift+E）― ドラッグで囲むだけ。ウィンドウ基準の固定座標なので、スクロールしても位置が動きません。続けて何個でも引けます。
+・選択範囲 ― テキストを選んで右クリック、または Ctrl+Shift+Y で隠す / Ctrl+Shift+K で赤枠。
+・要素ピッカー（Ctrl+Shift+L）― 画像やアバター、表の1行など、テキストとして選べないもの用。↑↓ で親子をたどれます。
 
 加工した部分はクリックすると消えます。「すべて解除」でページごと元に戻ります。うっかり消したくないときはロックを入れてください。
 

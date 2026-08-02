@@ -52,14 +52,13 @@
   </label>
 
   <div class="actions">
-    <button type="button" id="applyRect" class="primary"><span data-i18n="btnRect">Draw a box</span><kbd>Alt+Shift+R</kbd></button>
-    <button type="button" id="applySelection"><span data-i18n="btnSelection">Apply to selection</span><kbd>Alt+Shift+M</kbd></button>
-    <button type="button" id="pickElement"><span data-i18n="btnPick">Pick an element</span><kbd>Alt+Shift+K</kbd></button>
+    <button type="button" id="applyRect" class="primary"><span data-i18n="btnRect">Draw a box</span><kbd data-cmd="rect-mode">Ctrl+Shift+E</kbd></button>
+    <button type="button" id="applySelection"><span data-i18n="btnSelection">Apply to selection</span><kbd data-cmd="hide-selection">Ctrl+Shift+Y</kbd></button>
+    <button type="button" id="pickElement"><span data-i18n="btnPick">Pick an element</span><kbd data-cmd="pick-element">Ctrl+Shift+L</kbd></button>
     <button type="button" id="revealAll" class="ghost"><span data-i18n="btnReveal">Undo everything</span></button>
   </div>
 
-  <p class="note"><span data-i18n="note1">Click anything you applied to remove it. Boxes sit at fixed window coordinates, so scrolling does not move them.</span><br>
-    <span data-i18n="note2">Pixelate and blur can sometimes be reversed. Use black out when it really has to go.</span></p>
+  <p class="note" data-i18n="note">Click to remove. Only black out is unrecoverable.</p>
 
   <script src="popup.js"></script>
 </body>

@@ -34,8 +34,7 @@
   "btnReveal":      { "message": "Undo everything" },
 
   "sample":         { "message": "Sample text 0123" },
-  "note1":          { "message": "Click anything you applied to remove it. Boxes sit at fixed window coordinates, so scrolling does not move them." },
-  "note2":          { "message": "Pixelate and blur can sometimes be reversed. Use black out when it really has to go." },
+  "note":           { "message": "Click to remove. Only black out is unrecoverable." },
 
   "hintPick":       { "message": "click to apply / ↑ parent ↓ child / Esc to cancel" },
   "hintRect":       { "message": "drag to box it / as many as you like / Esc to finish" },
