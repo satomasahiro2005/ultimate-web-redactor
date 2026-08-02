@@ -8,9 +8,7 @@
   <h1>Ultimate Web Redactor</h1>
 
   <div class="modes" id="modes">
-    <button type="button" data-mode="mosaic" data-i18n="modeMosaic">Pixelate</button>
-    <button type="button" data-mode="blur" data-i18n="modeBlur">Blur</button>
-    <button type="button" data-mode="solid" data-i18n="modeSolid">Black out</button>
+    <button type="button" data-mode="hide" data-i18n="modeHide">Hide</button>
     <button type="button" data-mode="frame" data-i18n="modeFrame">Red box</button>
   </div>
 
@@ -19,14 +17,19 @@
     <span id="sample" data-i18n="sample">Sample text 0123</span>
   </div>
 
-  <div id="rowMosaic">
-    <label class="row"><span data-i18n="labelBlock">Block</span>
+  <div id="rowHide">
+    <div class="row">
+      <span data-i18n="styleLabel">Style</span>
+      <div class="seg" id="styles">
+        <button type="button" data-style="mosaic" data-i18n="modeMosaic">Pixelate</button>
+        <button type="button" data-style="blur" data-i18n="modeBlur">Blur</button>
+        <button type="button" data-style="solid" data-i18n="modeSolid">Black out</button>
+      </div>
+    </div>
+    <label class="row" id="rowMosaicPx"><span data-i18n="labelBlock">Block</span>
       <input type="range" id="mosaicPx" min="3" max="40" step="1">
       <output id="mosaicPxOut"></output></label>
-  </div>
-
-  <div id="rowBlur">
-    <label class="row"><span data-i18n="labelBlur">Radius</span>
+    <label class="row" id="rowBlurPx"><span data-i18n="labelBlur">Radius</span>
       <input type="range" id="blurPx" min="1" max="40" step="1">
       <output id="blurPxOut"></output></label>
   </div>
@@ -44,21 +47,18 @@
     <div class="row"><span data-i18n="labelColor">Color</span><div class="swatches" id="swatches"></div></div>
   </div>
 
-  <div id="rowSolid" class="hint" data-i18n="solidHint">Nothing to adjust. It just paints over.</div>
-
   <label class="row check">
     <input type="checkbox" id="lock">
     <span data-i18n="lockLabel">Keep clicks from removing it</span>
   </label>
 
   <div class="actions">
-    <button type="button" id="applyRect" class="primary"><span data-i18n="btnRect">Draw a box</span><kbd data-cmd="rect-mode">Ctrl+Shift+E</kbd></button>
+    <button type="button" id="applyRect"><span data-i18n="btnRect">Draw a box</span><kbd data-cmd="rect-mode">Ctrl+Shift+E</kbd></button>
     <button type="button" id="applySelection"><span data-i18n="btnSelection">Apply to selection</span><kbd data-cmd="hide-selection">Ctrl+Shift+Y</kbd></button>
     <button type="button" id="pickElement"><span data-i18n="btnPick">Pick an element</span><kbd data-cmd="pick-element">Ctrl+Shift+L</kbd></button>
-    <button type="button" id="revealAll" class="ghost"><span data-i18n="btnReveal">Undo everything</span></button>
+    <button type="button" id="undo"><span data-i18n="btnUndo">Undo</span><kbd>Ctrl+Z</kbd></button>
+    <button type="button" id="revealAll"><span data-i18n="btnReveal">Undo everything</span></button>
   </div>
-
-  <p class="note" data-i18n="note">Click to remove. Only black out is unrecoverable.</p>
 
   <script src="popup.js"></script>
 </body>

@@ -1,8 +1,8 @@
-/* Web Mosaic Next - popup */
+/* Ultimate Web Redactor - popup */
 
 const DEFAULTS = {
-  mode: 'mosaic',
-  hideMode: 'mosaic',
+  mode: 'hide',
+  hideStyle: 'mosaic',
   mosaicPx: 9,
   blurPx: 8,
   frameWidth: 5,
@@ -30,8 +30,7 @@ function localize() {
   }
 }
 
-/** ショートカットはユーザーが変えられるので、実際の割り当てを表示する。
-    Chrome が既定を採用できなかった場合はここが空になり、表示も消える。 */
+/** ショートカットはユーザーが変えられるので、実際の割り当てを表示する */
 function showShortcuts() {
   if (typeof chrome === 'undefined' || !chrome.commands) return;
   chrome.commands.getAll((cmds) => {
@@ -85,10 +84,10 @@ function renderPreview() {
     s.style.outline = `${settings.frameWidth}px solid ${settings.frameColor}`;
     s.style.outlineOffset = `${settings.framePad}px`;
     s.style.borderRadius = `${settings.frameRadius}px`;
-  } else if (settings.mode === 'solid') {
+  } else if (settings.hideStyle === 'solid') {
     s.style.filter = 'brightness(0)';
     s.style.backgroundColor = '#7f7f7f';
-  } else if (settings.mode === 'blur') {
+  } else if (settings.hideStyle === 'blur') {
     s.style.filter = `blur(${settings.blurPx}px)`;
   } else {
     s.style.filter = `url(#${pixelFilter(settings.mosaicPx)})`;
@@ -99,10 +98,14 @@ function render() {
   for (const b of document.querySelectorAll('#modes button')) {
     b.setAttribute('aria-pressed', String(b.dataset.mode === settings.mode));
   }
-  el('rowMosaic').hidden = settings.mode !== 'mosaic';
-  el('rowBlur').hidden = settings.mode !== 'blur';
-  el('rowFrame').hidden = settings.mode !== 'frame';
-  el('rowSolid').hidden = settings.mode !== 'solid';
+  for (const b of document.querySelectorAll('#styles button')) {
+    b.setAttribute('aria-pressed', String(b.dataset.style === settings.hideStyle));
+  }
+  const hide = settings.mode !== 'frame';
+  el('rowHide').hidden = !hide;
+  el('rowFrame').hidden = hide;
+  el('rowMosaicPx').hidden = !hide || settings.hideStyle !== 'mosaic';
+  el('rowBlurPx').hidden = !hide || settings.hideStyle !== 'blur';
 
   for (const k of SLIDERS) {
     el(k).value = settings[k];
@@ -139,10 +142,11 @@ for (const c of COLORS) {
 
 el('modes').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-mode]');
-  if (!b) return;
-  const mode = b.dataset.mode;
-  // 右クリックの「隠す」は赤枠に引きずられないよう別に覚えておく
-  save(mode === 'frame' ? { mode } : { mode, hideMode: mode });
+  if (b) save({ mode: b.dataset.mode });
+});
+el('styles').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-style]');
+  if (b) save({ hideStyle: b.dataset.style, mode: 'hide' });
 });
 for (const k of SLIDERS) {
   el(k).addEventListener('input', (e) => save({ [k]: Number(e.target.value) }));
@@ -151,11 +155,24 @@ el('lock').addEventListener('change', (e) => save({ lock: e.target.checked }));
 el('applyRect').addEventListener('click', () => relay({ type: 'rect', mode: settings.mode }));
 el('applySelection').addEventListener('click', () => relay({ type: 'apply-selection', mode: settings.mode }));
 el('pickElement').addEventListener('click', () => relay({ type: 'pick', mode: settings.mode }));
+el('undo').addEventListener('click', () => relay({ type: 'undo' }));
 el('revealAll').addEventListener('click', () => relay({ type: 'reveal-all' }));
+
+/** 1.0.1 以前は mode に mosaic/blur/solid が入っていた */
+function migrate(s) {
+  if (s.hideMode && !['mosaic', 'blur', 'solid'].includes(s.hideStyle)) s.hideStyle = s.hideMode;
+  if (!['hide', 'frame'].includes(s.mode)) {
+    if (['mosaic', 'blur', 'solid'].includes(s.mode)) s.hideStyle = s.mode;
+    s.mode = 'hide';
+  }
+  return s;
+}
 
 localize();
 showShortcuts();
-store.get(DEFAULTS, (v) => {
-  if (v) settings = { ...DEFAULTS, ...v };
+store.get({ ...DEFAULTS, hideMode: '' }, (v) => {
+  if (v) settings = migrate({ ...DEFAULTS, ...v });
+  delete settings.hideMode;
+  store.set({ mode: settings.mode, hideStyle: settings.hideStyle });
   render();
 });

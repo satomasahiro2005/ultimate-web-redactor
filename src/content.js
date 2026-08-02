@@ -1,5 +1,5 @@
 /*
- * Web Mosaic Next - content script
+ * Ultimate Web Redactor - content script
  * ページ側で加工を実行する。オンデマンド注入なので二重実行を弾く。
  */
 (() => {
@@ -9,14 +9,14 @@
   const ATTR_ID = 'data-uwr-id';
   const ATTR_MODE = 'data-uwr-mode';
   const ATTR_WRAP = 'data-uwr-wrap';
-  const ATTR_RECT = 'data-uwr-rect';
+  const ATTR_OVERLAY = 'data-uwr-overlay';
   const STYLE_ID = 'uwr-style';
   const DEFS_ID = 'uwr-defs';
   const UI_ID = 'uwr-ui';
 
   const DEFAULTS = {
-    mode: 'mosaic',
-    hideMode: 'mosaic',   // 「隠す」で使う方。赤枠を選んでいても影響しない
+    mode: 'hide',          // 'hide' | 'frame'
+    hideStyle: 'mosaic',   // 'mosaic' | 'blur' | 'solid'
     mosaicPx: 9,
     blurPx: 8,
     frameWidth: 5,
@@ -27,8 +27,9 @@
   };
   let settings = { ...DEFAULTS };
 
-  /** id -> { el, kind, mode, prevStyle, prevTitle } kind: 'wrap' | 'element' | 'rect' */
+  /** id -> { el, kind, mode, prevStyle, prevTitle, anchor } */
   const records = new Map();
+  const order = [];        // 取り消し用の適用順
   let seq = 0;
 
   // <base href> があると filter:url(#id) が外部参照になり Chrome では効かない
@@ -43,9 +44,20 @@
 
   /* ---------- settings ---------- */
 
+  /** 1.0.1 以前は mode に mosaic/blur/solid が入っていた */
+  function migrate(s) {
+    if (s.hideMode && !['mosaic', 'blur', 'solid'].includes(s.hideStyle)) s.hideStyle = s.hideMode;
+    if (!['hide', 'frame'].includes(s.mode)) {
+      if (['mosaic', 'blur', 'solid'].includes(s.mode)) s.hideStyle = s.mode;
+      s.mode = 'hide';
+    }
+    delete s.hideMode;
+    return s;
+  }
+
   function loadSettings() {
-    chrome.storage.local.get(DEFAULTS, (v) => {
-      if (!chrome.runtime.lastError && v) settings = { ...DEFAULTS, ...v };
+    chrome.storage.local.get({ ...DEFAULTS, hideMode: '' }, (v) => {
+      if (!chrome.runtime.lastError && v) settings = migrate({ ...DEFAULTS, ...v });
     });
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
@@ -53,10 +65,10 @@
     });
   }
 
-  /** 'hide' は「隠す」の指示。赤枠を選んでいても隠す側のモードに解決する */
+  /** 'hide' は隠す指示。実際の見た目は hideStyle で決まる */
   function resolveMode(requested) {
-    let mode = requested || settings.mode || 'mosaic';
-    if (mode === 'hide') mode = settings.hideMode || 'mosaic';
+    let mode = requested || settings.mode || 'hide';
+    if (mode === 'hide') mode = settings.hideStyle || 'mosaic';
     if (mode === 'frame') return 'frame';
     return mode === 'mosaic' && hasBase ? 'blur' : mode;
   }
@@ -68,8 +80,8 @@
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-[${ATTR_ID}]:not([${ATTR_RECT}]) { transition: filter 140ms ease; }
-[${ATTR_ID}][${ATTR_MODE}="solid"]:not([${ATTR_RECT}]) { color: transparent !important; }
+[${ATTR_ID}]:not([${ATTR_OVERLAY}]) { transition: filter 140ms ease; }
+[${ATTR_ID}][${ATTR_MODE}="solid"]:not([${ATTR_OVERLAY}]) { color: transparent !important; }
 [${ATTR_WRAP}] { display: inline; }
 `;
     (document.head || document.documentElement).appendChild(style);
@@ -96,12 +108,11 @@
    * filterUnits は objectBoundingBox では駄目。インライン要素には bbox が無く、
    * Chrome ではフィルタ領域が潰れて要素ごと消える。userSpaceOnUse を使うが、
    * このときの原点はインライン要素自身ではなく、それを含むブロック要素の左上。
-   * だから領域はブロック内でのオフセットぶんも含めて張る必要がある。
    */
   function ensurePixelFilter(block, spanW, spanH) {
     const bw = bucket(spanW + block * 4);
     const bh = bucket(spanH + block * 4);
-    if (bw > 8192 || bh > 8192) return null;   // 大きすぎる。呼び出し側でぼかしに逃がす
+    if (bw > 8192 || bh > 8192) return null;
     const id = `uwr-px-${block}-${bw}x${bh}`;
     if (document.getElementById(id)) return id;
 
@@ -150,7 +161,7 @@
     return (n || document.body).getBoundingClientRect();
   }
 
-  /* ---------- 要素への適用 ---------- */
+  /* ---------- 記録 ---------- */
 
   function isOurs(node) {
     const el = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
@@ -159,14 +170,85 @@
     return !!el.closest(`#${UI_ID}, #${DEFS_ID}, [${ATTR_ID}]`);
   }
 
-  function paint(el, mode) {
-    const imp = 'important';
-    if (mode === 'frame') {
-      el.style.setProperty('outline', `${settings.frameWidth}px solid ${settings.frameColor}`, imp);
-      el.style.setProperty('outline-offset', `${settings.framePad}px`, imp);
-      el.style.setProperty('border-radius', `${settings.frameRadius}px`, imp);
-      return;
+  function register(el, kind, mode, extra = {}) {
+    const id = `uwr${++seq}`;
+    records.set(id, {
+      el, kind, mode,
+      prevStyle: el.getAttribute('style'),
+      prevTitle: el.getAttribute('title'),
+      ...extra
+    });
+    order.push(id);
+    el.setAttribute(ATTR_ID, id);
+    el.setAttribute(ATTR_MODE, mode);
+    const title = titleFor(mode);
+    if (title) el.setAttribute('title', title);
+    el.addEventListener('click', onClick, true);
+    return id;
+  }
+
+  function titleFor(mode) {
+    if (settings.lock) return '';
+    return mode === 'frame'
+      ? t('titleRemoveBox', 'Click to remove the box')
+      : t('titleRemove', 'Click to remove');
+  }
+
+  /** クリックしたら消す。一時解除ではなく完全に元へ戻す */
+  function onClick(ev) {
+    if (settings.lock) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    releaseOne(ev.currentTarget.getAttribute(ATTR_ID));
+  }
+
+  function releaseOne(id) {
+    const rec = records.get(id);
+    if (!rec) return;
+    const { el } = rec;
+    el.removeEventListener('click', onClick, true);
+    records.delete(id);
+    const i = order.indexOf(id);
+    if (i >= 0) order.splice(i, 1);
+
+    if (rec.kind === 'overlay') { el.remove(); return; }
+
+    el.removeAttribute(ATTR_ID);
+    el.removeAttribute(ATTR_MODE);
+    if (rec.prevStyle) el.setAttribute('style', rec.prevStyle);
+    else el.removeAttribute('style');
+    if (rec.prevTitle === null) el.removeAttribute('title');
+    else el.setAttribute('title', rec.prevTitle);
+
+    if (rec.kind === 'wrap' && el.parentNode) {
+      const parent = el.parentNode;
+      while (el.firstChild) parent.insertBefore(el.firstChild, el);
+      parent.removeChild(el);
+      parent.normalize();
     }
+  }
+
+  function releaseAll() {
+    const n = records.size;
+    for (const id of [...records.keys()]) releaseOne(id);
+    order.length = 0;
+    return n;
+  }
+
+  /** 最後に適用したものを1つ取り消す */
+  function undo() {
+    while (order.length) {
+      const id = order[order.length - 1];
+      if (records.has(id)) { releaseOne(id); return true; }
+      order.pop();
+    }
+    return false;
+  }
+
+  /* ---------- 隠す（要素へ直接） ---------- */
+
+  function paintHide(el, mode) {
+    const imp = 'important';
     if (mode === 'solid') {
       el.style.setProperty('filter', 'brightness(0)', imp);
       el.style.setProperty('background-color', '#7f7f7f', imp);
@@ -188,140 +270,127 @@
     el.style.setProperty('filter', id ? `url(#${id})` : `blur(${settings.blurPx}px)`, imp);
   }
 
-  function titleFor(mode) {
-    if (settings.lock) return '';
-    return mode === 'frame'
-      ? t('titleRemoveBox', 'Click to remove the box')
-      : t('titleRemove', 'Click to remove');
-  }
-
-  function register(el, kind, mode) {
-    const id = `uwr${++seq}`;
-    records.set(id, {
-      el,
-      kind,
-      mode,
-      prevStyle: el.getAttribute('style'),
-      prevTitle: el.getAttribute('title')
-    });
-    el.setAttribute(ATTR_ID, id);
-    el.setAttribute(ATTR_MODE, mode);
-    const t = titleFor(mode);
-    if (t) el.setAttribute('title', t);
-    el.addEventListener('click', onClick, true);
-    return id;
-  }
-
   function applyTo(el, { mode, wrapped = false } = {}) {
     if (el.hasAttribute(ATTR_ID)) return null;
     ensureStyle();
     const m = resolveMode(mode);
+    // 赤枠は要素に outline を引くと親の overflow で切れるので、常に重ねて描く
+    if (m === 'frame') return frameRects(el.getBoundingClientRect(), { anchor: el });
     const id = register(el, wrapped ? 'wrap' : 'element', m);
-    paint(el, m);
+    paintHide(el, m);
     return id;
   }
 
-  /** クリックしたら消す。一時解除ではなく完全に元へ戻す */
-  function onClick(ev) {
-    if (settings.lock) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    releaseOne(ev.currentTarget.getAttribute(ATTR_ID));
+  /* ---------- 重ねて描く（矩形・赤枠） ---------- */
+
+  const OVERLAY_BASE =
+    'margin:0 !important;padding:0 !important;box-sizing:border-box !important;' +
+    'display:block !important;float:none !important;transform:none !important;' +
+    'opacity:1 !important;visibility:visible !important;clip-path:none !important;' +
+    'mask:none !important;z-index:2147483600 !important;';
+
+  function newOverlay() {
+    const el = document.createElement('div');
+    el.setAttribute(ATTR_OVERLAY, '');
+    (document.body || document.documentElement).appendChild(el);
+    return el;
   }
 
-  function releaseOne(id) {
-    const rec = records.get(id);
-    if (!rec) return;
-    const { el } = rec;
-    el.removeEventListener('click', onClick, true);
-    records.delete(id);
+  const hitStyle = () => (settings.lock
+    ? 'pointer-events:none !important;'
+    : 'pointer-events:auto !important;cursor:pointer !important;');
 
-    if (rec.kind === 'rect') { el.remove(); return; }
+  /** ウィンドウ基準の固定位置。ドラッグで引いた矩形はこちら */
+  function applyRect(r, mode) {
+    ensureStyle();
+    const m = resolveMode(mode);
+    if (m === 'frame') return frameRects(r, { fixed: true });
 
-    el.removeAttribute(ATTR_ID);
-    el.removeAttribute(ATTR_MODE);
-    if (rec.prevStyle) el.setAttribute('style', rec.prevStyle);
-    else el.removeAttribute('style');
-    if (rec.prevTitle === null) el.removeAttribute('title');
-    else el.setAttribute('title', rec.prevTitle);
-
-    if (rec.kind === 'wrap' && el.parentNode) {
-      const parent = el.parentNode;
-      while (el.firstChild) parent.insertBefore(el.firstChild, el);
-      parent.removeChild(el);
-      parent.normalize();
+    const el = newOverlay();
+    const id = register(el, 'overlay', m);
+    let look;
+    if (m === 'solid') {
+      look = 'background:#000 !important;border:0 !important;border-radius:2px !important;';
+    } else if (m === 'blur') {
+      const fn = `blur(${settings.blurPx}px)`;
+      look = `backdrop-filter:${fn} !important;-webkit-backdrop-filter:${fn} !important;` +
+             'background:transparent !important;border:0 !important;border-radius:2px !important;';
+    } else {
+      const fid = ensurePixelFilter(settings.mosaicPx, r.width, r.height);
+      const fn = fid ? `url(#${fid})` : `blur(${settings.blurPx}px)`;
+      look = `backdrop-filter:${fn} !important;-webkit-backdrop-filter:${fn} !important;` +
+             'background:transparent !important;border:0 !important;border-radius:2px !important;';
     }
+    el.setAttribute('style',
+      OVERLAY_BASE + hitStyle() + look + 'position:fixed !important;' +
+      `left:${Math.round(r.left)}px !important;top:${Math.round(r.top)}px !important;` +
+      `width:${Math.round(r.width)}px !important;height:${Math.round(r.height)}px !important;`);
+    return id;
   }
 
-  function releaseAll() {
-    const n = records.size;
-    for (const id of [...records.keys()]) releaseOne(id);
-    return n;
+  /**
+   * 矩形をひとつの赤枠で囲む。要素や選択範囲に対しても枠は必ずこれで描くので、
+   * 親の overflow に切られないし、選択範囲でも枠は1つで済む。
+   */
+  function frameRects(rectOrRects, { anchor = null, fixed = false } = {}) {
+    ensureStyle();
+    const box = unionRect(Array.isArray(rectOrRects) ? rectOrRects : [rectOrRects]);
+    if (!box) return null;
+    const el = newOverlay();
+    const id = register(el, 'overlay', 'frame', { anchor, fixed });
+    placeFrame(el, box, fixed);
+    return id;
   }
 
-  // 折り返しが変わるとモザイクのフィルタ領域が足りなくなるので張り直す
+  function unionRect(rects) {
+    const list = [...rects].filter((r) => r && r.width > 0 && r.height > 0);
+    if (!list.length) return null;
+    const left = Math.min(...list.map((r) => r.left));
+    const top = Math.min(...list.map((r) => r.top));
+    const right = Math.max(...list.map((r) => r.right !== undefined ? r.right : r.left + r.width));
+    const bottom = Math.max(...list.map((r) => r.bottom !== undefined ? r.bottom : r.top + r.height));
+    return { left, top, width: right - left, height: bottom - top };
+  }
+
+  /** ビューポート座標の矩形に枠を合わせる。fixed でなければページに追従させる */
+  function placeFrame(el, box, fixed) {
+    const pad = settings.framePad;
+    const w = settings.frameWidth;
+    const look =
+      `border:${w}px solid ${settings.frameColor} !important;` +
+      `border-radius:${settings.frameRadius}px !important;background:transparent !important;`;
+
+    el.setAttribute('style', OVERLAY_BASE + hitStyle() + look +
+      `position:${fixed ? 'fixed' : 'absolute'} !important;left:0 !important;top:0 !important;` +
+      `width:${Math.round(box.width + pad * 2 + w * 2)}px !important;` +
+      `height:${Math.round(box.height + pad * 2 + w * 2)}px !important;`);
+
+    if (fixed) {
+      el.style.setProperty('left', `${Math.round(box.left - pad - w)}px`, 'important');
+      el.style.setProperty('top', `${Math.round(box.top - pad - w)}px`, 'important');
+      return;
+    }
+    // absolute の基準がどこであっても合うように、実際のズレを測って補正する
+    const at0 = el.getBoundingClientRect();
+    el.style.setProperty('left', `${Math.round(box.left - pad - w - at0.left)}px`, 'important');
+    el.style.setProperty('top', `${Math.round(box.top - pad - w - at0.top)}px`, 'important');
+  }
+
+  /* ---------- 再配置 ---------- */
+
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       for (const rec of records.values()) {
-        if (rec.kind !== 'rect' && rec.mode === 'mosaic') paint(rec.el, 'mosaic');
+        if (rec.kind === 'overlay' && rec.mode === 'frame' && rec.anchor && rec.anchor.isConnected) {
+          placeFrame(rec.el, rec.anchor.getBoundingClientRect(), rec.fixed);
+        } else if (rec.kind !== 'overlay' && rec.mode === 'mosaic') {
+          paintHide(rec.el, 'mosaic');
+        }
       }
     }, 200);
   });
-
-  /* ---------- 矩形（ウィンドウ基準の絶対座標） ---------- */
-
-  const RECT_BASE =
-    'position:fixed !important;margin:0 !important;padding:0 !important;' +
-    'box-sizing:border-box !important;display:block !important;float:none !important;' +
-    'transform:none !important;opacity:1 !important;visibility:visible !important;' +
-    'clip-path:none !important;mask:none !important;z-index:2147483600 !important;';
-
-  function applyRect(r, mode) {
-    ensureStyle();
-    const m = resolveMode(mode);
-    const el = document.createElement('div');
-    el.setAttribute(ATTR_RECT, '');
-    document.documentElement.appendChild(el);
-    const id = register(el, 'rect', m);
-    paintRect(el, m, r);
-    return id;
-  }
-
-  function paintRect(el, mode, r) {
-    const pad = mode === 'frame' ? settings.framePad : 0;
-    const left = r.left - pad;
-    const top = r.top - pad;
-    const width = r.width + pad * 2;
-    const height = r.height + pad * 2;
-
-    let look;
-    if (mode === 'frame') {
-      look = `border:${settings.frameWidth}px solid ${settings.frameColor} !important;` +
-             `border-radius:${settings.frameRadius}px !important;background:transparent !important;`;
-    } else if (mode === 'solid') {
-      look = 'background:#000 !important;border:0 !important;border-radius:2px !important;';
-    } else if (mode === 'blur') {
-      look = `backdrop-filter:blur(${settings.blurPx}px) !important;` +
-             `-webkit-backdrop-filter:blur(${settings.blurPx}px) !important;` +
-             'background:transparent !important;border:0 !important;border-radius:2px !important;';
-    } else {
-      const id = ensurePixelFilter(settings.mosaicPx, width, height);
-      const fn = id ? `url(#${id})` : `blur(${settings.blurPx}px)`;
-      look = `backdrop-filter:${fn} !important;-webkit-backdrop-filter:${fn} !important;` +
-             'background:transparent !important;border:0 !important;border-radius:2px !important;';
-    }
-
-    const hit = settings.lock
-      ? 'pointer-events:none !important;'
-      : 'pointer-events:auto !important;cursor:pointer !important;';
-
-    el.setAttribute('style',
-      RECT_BASE + hit + look +
-      `left:${Math.round(left)}px !important;top:${Math.round(top)}px !important;` +
-      `width:${Math.round(width)}px !important;height:${Math.round(height)}px !important;`);
-  }
 
   /* ---------- 選択範囲 ---------- */
 
@@ -386,8 +455,18 @@
 
     const ranges = [];
     for (let i = 0; i < sel.rangeCount; i++) ranges.push(sel.getRangeAt(i).cloneRange());
+    const m = resolveMode(mode);
 
     let count = 0;
+    if (m === 'frame') {
+      // 選択範囲は覆う矩形ひとつで囲む
+      const rects = [];
+      for (const range of ranges) rects.push(...range.getClientRects());
+      if (frameRects(rects)) count = 1;
+      sel.removeAllRanges();
+      return count;
+    }
+
     for (const range of ranges) {
       splitBoundaries(range);
       for (const node of outermostNodes(range)) {
@@ -396,8 +475,8 @@
           span.setAttribute(ATTR_WRAP, '');
           node.parentNode.insertBefore(span, node);
           span.appendChild(node);
-          if (applyTo(span, { mode, wrapped: true })) count++;
-        } else if (applyTo(node, { mode })) {
+          if (applyTo(span, { mode: m, wrapped: true })) count++;
+        } else if (applyTo(node, { mode: m })) {
           count++;
         }
       }
@@ -411,15 +490,19 @@
       const src = el.currentSrc || el.src || el.getAttribute('data') || '';
       if (src && src === srcUrl) return applyTo(el, { mode }) ? 1 : 0;
     }
-    startPicker(mode);   // srcset や背景画像で特定できなければピッカーに逃がす
+    startPicker(mode);
     return 0;
   }
 
-  /* ---------- 画面上のUI（ピッカー / 矩形ドラッグ） ---------- */
+  /* ---------- 画面上のUI ---------- */
 
-  let overlay = null;   // 終了処理を入れておく
+  let overlayUi = null;
 
-  function makeOverlay(hint, interactive) {
+  const modeLabel = (m) => (m === 'frame'
+    ? t('modeFrame', 'Red box')
+    : t('modeHide', 'Hide'));
+
+  function makeUi(interactive, barHtml) {
     const host = document.createElement('div');
     host.id = UI_ID;
     host.style.cssText =
@@ -428,37 +511,46 @@
     const sr = host.attachShadow({ mode: 'open' });
     sr.innerHTML = `
 <style>
-  .box { position:fixed; border:2px solid #4c8dff; background:rgba(76,141,255,.16);
-         border-radius:3px; display:none; pointer-events:none; }
+  .box { position:fixed; display:none; pointer-events:none;
+         border:2px solid #ffffff; outline:2px solid #1a73e8; outline-offset:0;
+         box-shadow: 0 0 0 9999px rgba(0,0,0,.28), 0 0 12px rgba(26,115,232,.9);
+         background:rgba(26,115,232,.10); }
   .bar { position:fixed; left:50%; bottom:24px; transform:translateX(-50%);
-         font:13px/1.6 system-ui,"Segoe UI","Yu Gothic UI",sans-serif; color:#fff;
-         background:rgba(20,22,28,.92); padding:8px 14px; border-radius:8px;
-         box-shadow:0 4px 16px rgba(0,0,0,.35); white-space:nowrap; pointer-events:none; }
-  .bar b { color:#8fb8ff; font-weight:600; }
+         display:flex; align-items:center; gap:8px;
+         font:13px/1 system-ui,"Segoe UI","Yu Gothic UI",sans-serif; color:#fff;
+         background:rgba(20,22,28,.95); padding:7px 8px 7px 12px; border-radius:10px;
+         box-shadow:0 6px 20px rgba(0,0,0,.45); white-space:nowrap; pointer-events:auto; }
+  .bar button { font:inherit; color:#cfd8e6; background:transparent; cursor:pointer;
+                border:1px solid rgba(255,255,255,.22); border-radius:6px; padding:5px 10px; }
+  .bar button:hover { border-color:#8fb8ff; color:#fff; }
+  .bar button[aria-pressed="true"] { background:#3b6fe0; border-color:#3b6fe0; color:#fff; }
+  .bar .hint { color:#9fb0c9; }
+  .bar .x { border:0; font-size:16px; line-height:1; padding:4px 8px; color:#9fb0c9; }
+  .bar .x:hover { color:#fff; }
+  .bar .sep { width:1px; height:18px; background:rgba(255,255,255,.18); }
 </style>
-<div class="box"></div><div class="bar">${hint}</div>`;
+<div class="box"></div>
+<div class="bar">${barHtml}</div>`;
     (document.body || document.documentElement).appendChild(host);
-    return { host, box: sr.querySelector('.box') };
+    return { host, sr, box: sr.querySelector('.box'), bar: sr.querySelector('.bar') };
   }
 
-  function closeOverlay() {
-    if (!overlay) return;
-    const done = overlay;
-    overlay = null;
+  function closeUi() {
+    if (!overlayUi) return;
+    const done = overlayUi;
+    overlayUi = null;
     done();
   }
 
-  const modeLabel = (m) => t({
-    mosaic: 'modeMosaic', blur: 'modeBlur', solid: 'modeSolid', frame: 'modeFrame'
-  }[m], { mosaic: 'Pixelate', blur: 'Blur', solid: 'Black out', frame: 'Red box' }[m] || m);
+  /* ---------- 要素ピッカー ---------- */
 
   function startPicker(mode) {
-    if (overlay) return;
+    if (overlayUi) return;
     ensureStyle();
-    const m = resolveMode(mode);
-    const { host, box } = makeOverlay(
-      `<b>${modeLabel(m)}</b> — ${t('hintPick', 'click to apply / ↑ parent ↓ child / Esc to cancel')}`,
-      false);
+    const m = mode || settings.mode;
+    const { host, box } = makeUi(false,
+      `<b>${modeLabel(m)}</b><span class="sep"></span><span class="hint">${
+        t('hintPick', 'click to apply / ↑ parent ↓ child / Esc to cancel')}</span>`);
 
     let target = null;
     let climbed = [];
@@ -480,7 +572,7 @@
       draw();
     };
     const onKey = (ev) => {
-      if (ev.key === 'Escape') { ev.preventDefault(); closeOverlay(); return; }
+      if (ev.key === 'Escape') { ev.preventDefault(); closeUi(); return; }
       if (ev.key === 'ArrowUp') {
         const parent = target && target.parentElement;
         if (!parent || parent === document.documentElement) return;
@@ -498,7 +590,7 @@
       ev.preventDefault();
       ev.stopPropagation();
       const el = target;
-      closeOverlay();
+      closeUi();
       if (el && el.isConnected) applyTo(el, { mode: m });
     };
 
@@ -507,7 +599,7 @@
     document.addEventListener('click', onPick, true);
     window.addEventListener('scroll', draw, true);
     window.addEventListener('resize', draw, true);
-    overlay = () => {
+    overlayUi = () => {
       document.removeEventListener('mousemove', onMove, true);
       document.removeEventListener('keydown', onKey, true);
       document.removeEventListener('click', onPick, true);
@@ -517,15 +609,41 @@
     };
   }
 
+  /* ---------- 矩形ドラッグ ---------- */
+
   function startRect(mode) {
-    if (overlay) return;
+    if (overlayUi) return;
     ensureStyle();
-    const m = resolveMode(mode);
-    const { host, box } = makeOverlay(
-      `<b>${modeLabel(m)}</b> — ${t('hintRect', 'drag to box it / as many as you like / Esc to finish')}`,
-      true);
+    let current = mode || settings.mode || 'hide';
+
+    const { host, sr, box, bar } = makeUi(true, `
+      <button data-m="hide">${t('modeHide', 'Hide')}</button>
+      <button data-m="frame">${t('modeFrame', 'Red box')}</button>
+      <span class="sep"></span>
+      <span class="hint">${t('hintRect', 'drag to box it / click to finish')}</span>
+      <button class="x" aria-label="close">✕</button>`);
+
+    const syncBar = () => {
+      for (const b of bar.querySelectorAll('button[data-m]')) {
+        b.setAttribute('aria-pressed', String(b.dataset.m === current));
+      }
+    };
+    syncBar();
+
+    bar.addEventListener('mousedown', (e) => e.stopPropagation(), true);
+    bar.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.classList.contains('x')) { closeUi(); return; }
+      current = b.dataset.m;
+      settings.mode = current;
+      try { chrome.storage.local.set({ mode: current }); } catch (_) { /* テスト時 */ }
+      syncBar();
+    }, true);
 
     let start = null;
+    let moved = false;
     const rectOf = (ev) => ({
       left: Math.min(start.x, ev.clientX),
       top: Math.min(start.y, ev.clientY),
@@ -544,31 +662,51 @@
       if (ev.button !== 0) return;
       ev.preventDefault();
       start = { x: ev.clientX, y: ev.clientY };
-      show({ left: ev.clientX, top: ev.clientY, width: 0, height: 0 });
+      moved = false;
     };
-    const onMove = (ev) => { if (start) show(rectOf(ev)); };
+    const onMove = (ev) => {
+      if (!start) return;
+      const r = rectOf(ev);
+      if (r.width > 3 || r.height > 3) { moved = true; show(r); }
+    };
     const onUp = (ev) => {
       if (!start) return;
       const r = rectOf(ev);
       start = null;
       box.style.display = 'none';
-      if (r.width >= 6 && r.height >= 6) applyRect(r, m);
+      // ドラッグしていなければただのクリック。モードを抜ける
+      if (!moved || r.width < 6 || r.height < 6) { closeUi(); return; }
+      applyRect(r, current);
     };
     const onKey = (ev) => {
-      if (ev.key === 'Escape') { ev.preventDefault(); closeOverlay(); }
+      if (ev.key === 'Escape') { ev.preventDefault(); closeUi(); }
     };
 
     host.addEventListener('mousedown', onDown, true);
     window.addEventListener('mousemove', onMove, true);
     window.addEventListener('mouseup', onUp, true);
     document.addEventListener('keydown', onKey, true);
-    overlay = () => {
+    overlayUi = () => {
       window.removeEventListener('mousemove', onMove, true);
       window.removeEventListener('mouseup', onUp, true);
       document.removeEventListener('keydown', onKey, true);
       host.remove();
     };
   }
+
+  /* ---------- Ctrl+Z ---------- */
+
+  document.addEventListener('keydown', (ev) => {
+    if (!(ev.ctrlKey || ev.metaKey) || ev.altKey || ev.shiftKey) return;
+    if ((ev.key || '').toLowerCase() !== 'z') return;
+    if (!records.size) return;
+    const el = ev.target;
+    if (el && (el.isContentEditable ||
+               /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName || ''))) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    undo();
+  }, true);
 
   /* ---------- messaging ---------- */
 
@@ -578,7 +716,8 @@
       case 'apply-src':       return { count: applyBySrc(msg.srcUrl, msg.mode) };
       case 'pick':            startPicker(msg.mode); return { ok: true };
       case 'rect':            startRect(msg.mode); return { ok: true };
-      case 'reveal-all':      closeOverlay(); return { count: releaseAll() };
+      case 'undo':            return { ok: undo() };
+      case 'reveal-all':      closeUi(); return { count: releaseAll() };
       case 'ping':            return { ok: true, applied: records.size };
       default:                return { ok: false };
     }
@@ -593,7 +732,9 @@
   }
 
   window.__ultimateWebRedactor = {
-    handle, applySelection, applyTo, applyRect, startPicker, startRect, closeOverlay, releaseAll,
+    handle, applySelection, applyTo, applyRect, frameRects,
+    startPicker, startRect, closeUi: closeUi, releaseAll, undo,
+    get records() { return records; },
     get settings() { return settings; },
     set settings(v) { settings = { ...settings, ...v }; }
   };

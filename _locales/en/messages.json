@@ -1,6 +1,6 @@
 {
   "appName":        { "message": "Ultimate Web Redactor" },
-  "appDesc":        { "message": "Blur, pixelate or black out anything on a page, and put a red box around what matters. Just drag over it." },
+  "appDesc":        { "message": "Pixelate anything on a page, and put a red box around what matters. Just drag over it." },
 
   "cmdHide":        { "message": "Hide the selection" },
   "cmdFrame":       { "message": "Box the selection in red" },
@@ -14,10 +14,12 @@
   "menuFrameMedia": { "message": "Box this image or video in red" },
   "menuReveal":     { "message": "Undo everything on this page" },
 
+  "modeHide":       { "message": "Hide" },
+  "modeFrame":      { "message": "Red box" },
+  "styleLabel":     { "message": "Style" },
   "modeMosaic":     { "message": "Pixelate" },
   "modeBlur":       { "message": "Blur" },
   "modeSolid":      { "message": "Black out" },
-  "modeFrame":      { "message": "Red box" },
 
   "labelBlock":     { "message": "Block" },
   "labelBlur":      { "message": "Radius" },
@@ -31,13 +33,13 @@
   "btnRect":        { "message": "Draw a box" },
   "btnSelection":   { "message": "Apply to selection" },
   "btnPick":        { "message": "Pick an element" },
+  "btnUndo":        { "message": "Undo" },
   "btnReveal":      { "message": "Undo everything" },
 
   "sample":         { "message": "Sample text 0123" },
-  "note":           { "message": "Click to remove. Only black out is unrecoverable." },
 
   "hintPick":       { "message": "click to apply / ↑ parent ↓ child / Esc to cancel" },
-  "hintRect":       { "message": "drag to box it / as many as you like / Esc to finish" },
+  "hintRect":       { "message": "drag to box it / click to finish" },
   "titleRemove":    { "message": "Click to remove" },
   "titleRemoveBox": { "message": "Click to remove the box" }
 }

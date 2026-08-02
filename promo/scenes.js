@@ -12,13 +12,13 @@ const PEOPLE = [
 
 const CAPTIONS = {
   1: ['Hide anything before you share a screenshot',
-      'Pixelate, blur or black out — pick a mode, drag over it, done.'],
+      'Drag over it. Block size adjustable from 3 to 40 px.'],
   2: ['Drag a box over whatever should not be seen',
       'Boxes sit at fixed window coordinates. Scrolling never moves them.'],
   3: ['Put a red box around what you want people to look at',
       'Width, padding, corner radius and colour are all adjustable.'],
-  4: ['Four ways to treat a region',
-      'Pixelate and blur keep the shape. Black out removes it. Red box points at it.']
+  4: ['Switch the style whenever you prefer',
+      'Pixelate keeps the shape. Blur and black out are one click away.']
 };
 
 const table = document.getElementById('members');
@@ -37,8 +37,8 @@ document.getElementById('capSub').textContent = CAPTIONS[shot][1];
 
 const api = window.__ultimateWebRedactor;
 const set = (o) => { api.settings = o; };
-const base = { mosaicPx: 9, blurPx: 8, frameWidth: 5, framePad: 5, frameRadius: 0,
-               frameColor: '#ff2d2d', lock: true };
+const base = { mode: 'hide', hideStyle: 'mosaic', mosaicPx: 9, blurPx: 8,
+               frameWidth: 5, framePad: 5, frameRadius: 0, frameColor: '#ff2d2d', lock: true };
 
 /** 画面座標で矩形を置く */
 const box = (sel, mode, pad = 0) => {
@@ -48,11 +48,11 @@ const box = (sel, mode, pad = 0) => {
 };
 
 if (shot === '1') {
-  set({ ...base, mode: 'mosaic', mosaicPx: 8 });
-  for (const td of document.querySelectorAll('#members .mail')) api.applyTo(td, { mode: 'mosaic' });
-  for (const el of ['#k1', '#k2']) api.applyTo(document.querySelector(el), { mode: 'mosaic' });
-  set({ ...base, mode: 'solid' });
-  api.applyTo(document.getElementById('spend'), { mode: 'solid' });
+  set({ ...base, mosaicPx: 8 });
+  for (const td of document.querySelectorAll('#members .mail')) api.applyTo(td, { mode: 'hide' });
+  for (const el of ['#k1', '#k2']) api.applyTo(document.querySelector(el), { mode: 'hide' });
+  set({ ...base, hideStyle: 'solid' });
+  api.applyTo(document.getElementById('spend'), { mode: 'hide' });
   const f = document.createElement('iframe');
   f.id = 'popup';
   f.src = '../src/popup.html';
@@ -60,14 +60,13 @@ if (shot === '1') {
 }
 
 if (shot === '2') {
-  set({ ...base, mode: 'mosaic', mosaicPx: 10 });
-  box('#members tr:nth-child(2)', 'mosaic');
-  box('#members tr:nth-child(3)', 'mosaic');
+  set({ ...base, mosaicPx: 10 });
+  box('#members tr:nth-child(2)', 'hide');
+  box('#members tr:nth-child(3)', 'hide');
   // ドラッグ中の見た目を作る
-  api.startRect('mosaic');
+  api.startRect('hide');
   const host = document.getElementById('uwr-ui');
-  const sr = host.shadowRoot;
-  const b = sr.querySelector('.box');
+  const b = host.shadowRoot.querySelector('.box');
   const r = document.querySelector('#members tr:nth-child(4)').getBoundingClientRect();
   b.style.display = 'block';
   b.style.left = `${r.left}px`;
@@ -85,12 +84,12 @@ if (shot === '3') {
 
 if (shot === '4') {
   const rows = [...document.querySelectorAll('#members tr')].slice(1, 5);
-  const modes = ['mosaic', 'blur', 'solid', 'frame'];
+  const modes = ['hide', 'hide', 'hide', 'frame'];
+  const styles = ['mosaic', 'blur', 'solid', 'mosaic'];
   const names = ['Pixelate', 'Blur', 'Black out', 'Red box'];
   rows.forEach((tr, i) => {
     const cell = tr.querySelector('.mail');
-    set({ ...base, mode: modes[i], mosaicPx: 9, blurPx: 7,
-          frameWidth: 3, framePad: 3, frameRadius: 4 });
+    set({ ...base, mode: modes[i], hideStyle: styles[i], mosaicPx: 9, blurPx: 7, frameWidth: 3, framePad: 3, frameRadius: 4 });
     api.applyTo(cell, { mode: modes[i] });
     const last = tr.lastElementChild;
     last.innerHTML = `<span style="color:#2f5fbf;font-weight:600">${names[i]}</span>`;

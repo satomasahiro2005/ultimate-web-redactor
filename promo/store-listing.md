@@ -15,35 +15,30 @@ Ultimate Web Redactor
 
 **Summary** (132字以内 / 実際 105字)
 ```
-Blur, pixelate or black out anything on a page, and put a red box around what matters. Just drag over it.
+Pixelate anything on a page, and put a red box around what matters. Just drag over it.
 ```
 
 **Description**
 ```
-Screenshots leak more than you think. An email column, an API key, a customer name, an invoice number — all of it sits right there in the frame.
+Screenshots leak more than you think. An email column, an API key, a customer name, an invoice number - all of it sits right there in the frame.
 
-Ultimate Web Redactor lets you cover any part of a page before you capture it, and draw a red box around the part you actually want people to look at. Everything happens locally in your browser. Nothing is uploaded anywhere.
+Ultimate Web Redactor covers what should not be seen, and puts a red box around what should. Everything happens locally in your browser. Nothing is uploaded anywhere.
 
-FOUR WAYS TO TREAT A REGION
-• Pixelate — real block mosaic, block size adjustable from 3 to 40 px
-• Blur — radius adjustable from 1 to 40 px
-• Black out — a solid fill, nothing left to recover
-• Red box — an outline that does not shift the layout, with adjustable width, padding, corner radius and colour
+TWO THINGS IT DOES
+- Hide: a real block mosaic, with the block size adjustable from 3 to 40 px. Switch it to a blur or a solid fill whenever you prefer.
+- Red box: an outline that does not shift the layout, with adjustable width, padding, corner radius and colour.
 
-THREE WAYS TO PICK WHAT TO COVER
-• Drag a box (Ctrl+Shift+E) — drag over anything at all. Boxes sit at fixed window coordinates, so scrolling never moves them, and you can draw as many as you like in a row.
-• Select text and use the right-click menu, or Ctrl+Shift+Y to hide it and Ctrl+Shift+K to box it in red.
-• Pick an element (Ctrl+Shift+L) — for images, avatars and table rows that you cannot select as text. Arrow keys walk up and down the tree.
+THREE WAYS TO PICK A REGION
+- Drag a box (Ctrl+Shift+E). Drag over anything at all. Boxes sit at fixed window coordinates, so scrolling never moves them, and you can switch between hide and red box from the toolbar without leaving the mode.
+- Select text and use the right-click menu, or Ctrl+Shift+Y to hide it and Ctrl+Shift+K to box it in red.
+- Pick an element (Ctrl+Shift+L) for images, avatars and table rows that you cannot select as text. Arrow keys walk up and down the tree.
 
-Click anything you applied to remove it. "Undo everything" clears the page in one go. If you would rather not remove things by accident, there is a lock switch.
+Ctrl+Z takes back the last one. Click anything you applied to remove it. "Undo everything" clears the page in one go. There is a lock switch if you would rather not remove things by accident.
 
 PERMISSIONS
-No host permissions. The extension asks for nothing until you invoke it, and then it only touches the tab you are looking at. Your settings are stored locally. There is no analytics, no account, no network request of any kind.
+No host permissions. The extension asks for nothing until you invoke it, and then it only touches the tab you are looking at. Your settings are stored locally. There is no analytics, no account, and no network request of any kind.
 
-A NOTE ON SAFETY
-Pixelation and blur can sometimes be reversed by an attacker who knows what they are doing. When something really must not get out, use black out.
-
-Open source: https://github.com/satomasahiro2005/ultimate-web-redactor
+Open source (MIT): https://github.com/satomasahiro2005/ultimate-web-redactor
 ```
 
 **Category**: Privacy & Security
@@ -60,35 +55,30 @@ Ultimate Web Redactor
 
 **概要**
 ```
-ページの好きなところをモザイク・ぼかし・黒塗りで隠し、赤枠で目立たせる。ドラッグで囲むだけ。
+ページの好きなところをモザイクで隠し、赤枠で目立たせる。ドラッグで囲むだけ。
 ```
 
 **説明**
 ```
 スクリーンショットには思ったより余計なものが写ります。メールアドレスの列、APIキー、取引先の名前、請求番号。撮ったあとで気づくと撮り直しです。
 
-Ultimate Web Redactor は、撮る前にページの好きなところを覆い、逆に見せたいところを赤枠で囲むための拡張機能です。処理はすべてブラウザの中で完結し、どこにも送信しません。
+Ultimate Web Redactor は、見せたくないところを覆い、見せたいところを赤枠で囲むための拡張機能です。処理はすべてブラウザの中で完結し、どこにも送信しません。
 
-4つのモード
-・モザイク ― 本物のブロック状。ブロックの一辺を 3〜40px で調整
-・ぼかし ― 半径を 1〜40px で調整
-・黒塗り ― 塗り潰し。復元の余地なし
-・赤枠 ― レイアウトを動かさない枠。太さ・余白・角丸・色を調整
+やることは2つ
+・隠す ― 本物のブロック状のモザイク。ブロックの一辺を 3〜40px で調整できます。ぼかしや黒塗りにも切り替えられます。
+・赤枠 ― レイアウトを動かさない枠。太さ・余白・角丸・色を調整できます。
 
 範囲の指定は3通り
-・矩形（Ctrl+Shift+E）― ドラッグで囲むだけ。ウィンドウ基準の固定座標なので、スクロールしても位置が動きません。続けて何個でも引けます。
+・矩形（Ctrl+Shift+E）― ドラッグで囲むだけ。ウィンドウ基準の固定座標なのでスクロールしても動かず、ツールバーから隠すと赤枠を切り替えられます。
 ・選択範囲 ― テキストを選んで右クリック、または Ctrl+Shift+Y で隠す / Ctrl+Shift+K で赤枠。
 ・要素ピッカー（Ctrl+Shift+L）― 画像やアバター、表の1行など、テキストとして選べないもの用。↑↓ で親子をたどれます。
 
-加工した部分はクリックすると消えます。「すべて解除」でページごと元に戻ります。うっかり消したくないときはロックを入れてください。
+Ctrl+Z で直前のひとつを取り消せます。加工した部分はクリックでも消えます。「すべて解除」でページごと元に戻ります。うっかり消したくないときはロックを入れてください。
 
 権限について
 ホスト権限はありません。呼び出されるまで何もせず、呼ばれたときに開いているタブだけを触ります。設定はローカル保存で、解析も、アカウントも、通信も一切ありません。
 
-注意
-モザイクとぼかしは、条件次第で元の内容を推測されることがあります。絶対に出せないものには黒塗りを使ってください。
-
-ソースコード: https://github.com/satomasahiro2005/ultimate-web-redactor
+ソースコード（MIT）: https://github.com/satomasahiro2005/ultimate-web-redactor
 ```
 
 **カテゴリ**: プライバシーとセキュリティ

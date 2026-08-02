@@ -63,8 +63,8 @@ const sync = () => {
   const n = Number($('size').value);
   const m = $('mode').value;
   api.settings = {
-    mode: m,
-    hideMode: m === 'frame' ? 'mosaic' : m,
+    mode: m === 'frame' ? 'frame' : 'hide',
+    hideStyle: m === 'frame' ? 'mosaic' : m,
     mosaicPx: n, blurPx: n,
     frameWidth: 5, framePad: 5, frameRadius: 0,
     frameColor: '#ff2d2d', lock: false
