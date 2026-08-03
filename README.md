@@ -1,20 +1,21 @@
 # Ultimate Web Redactor
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/lnancieofemmlcigiebihibjpepheoif?logo=googlechrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4)](https://chromewebstore.google.com/detail/lnancieofemmlcigiebihibjpepheoif)
+[![Users](https://img.shields.io/chrome-web-store/users/lnancieofemmlcigiebihibjpepheoif?label=users&color=4285F4)](https://chromewebstore.google.com/detail/lnancieofemmlcigiebihibjpepheoif)
+[![Rating](https://img.shields.io/chrome-web-store/rating/lnancieofemmlcigiebihibjpepheoif?label=rating&color=4285F4)](https://chromewebstore.google.com/detail/lnancieofemmlcigiebihibjpepheoif)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+![Ultimate Web Redactor のスクリーンショット](promo/shots/screenshot-1.png)
+
 ページの一部をモザイク・ぼかし・黒塗りで隠したり、赤枠で囲んで目立たせたりする Chrome 拡張。
 スクリーンショットを撮る前の目隠しと、見せたい箇所の強調を、ページ上で直接やる。
+
+[![Install from Chrome Web Store](https://img.shields.io/badge/Install%20from%20Chrome%20Web%20Store-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/lnancieofemmlcigiebihibjpepheoif)
 
 manifest v3。ライブラリ依存なし。ホスト権限を持たず、右クリック・ショートカット・ツールバーから
 呼ばれたときだけ `activeTab` でその場に注入される。通信も解析もアカウントもない。
 
-![スクリーンショット](promo/shots/screenshot-1.png)
-
 ## 使い方
-
-インストールは開発者モードで読み込む。
-
-1. `chrome://extensions` を開く
-2. 右上の「デベロッパーモード」をオン
-3. 「パッケージ化されていない拡張機能を読み込む」でこのフォルダを選ぶ
 
 やることは2つ。**隠す**（モザイク。ぼかしと黒塗りにも切り替えられる）と、**赤枠**。
 
@@ -78,6 +79,9 @@ Chrome は `backdrop-filter: url(#svgフィルタ)` を受け付けるので、�
 モザイクを選んでいてもぼかしに落とす。
 
 ## 開発
+
+未パッケージで読み込む場合は `chrome://extensions` でデベロッパーモードをオンにして、
+「パッケージ化されていない拡張機能を読み込む」でこのフォルダを選ぶ。
 
 ```bash
 node test/server.js
