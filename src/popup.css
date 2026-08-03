@@ -156,5 +156,14 @@ kbd {
   font: 11px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
   color: var(--muted);
 }
+kbd.unset {
+  font-family: inherit;
+  color: var(--accent);
+  border: 1px dashed var(--accent);
+  border-radius: 5px;
+  padding: 3px 7px;
+  cursor: pointer;
+}
+kbd.unset:hover { background: var(--accent); color: var(--accent-fg); border-style: solid; }
 
 [hidden] { display: none !important; }

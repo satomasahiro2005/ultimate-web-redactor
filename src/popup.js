@@ -37,8 +37,15 @@ function showShortcuts() {
     const map = Object.fromEntries((cmds || []).map((c) => [c.name, c.shortcut]));
     for (const kbd of document.querySelectorAll('kbd[data-cmd]')) {
       const s = map[kbd.dataset.cmd];
-      if (s) kbd.textContent = s;
-      else kbd.hidden = true;
+      if (s) { kbd.textContent = s; continue; }
+      // 他の拡張が同じキーを押さえていると Chrome は何も割り当てない。
+      // 黙って消さずに、設定画面への入口にする。
+      kbd.textContent = chrome.i18n.getMessage('kbdUnset') || 'set a key';
+      kbd.classList.add('unset');
+      kbd.addEventListener('click', (e) => {
+        e.stopPropagation();
+        chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+      });
     }
   });
 }

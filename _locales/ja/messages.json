@@ -37,6 +37,7 @@
   "btnReveal":      { "message": "すべて解除" },
 
   "sample":         { "message": "Sample テキスト 0123" },
+  "kbdUnset":       { "message": "キーを設定" },
 
   "hintPick":       { "message": "クリックで適用 / ↑ 親 ↓ 子 / Esc 中止" },
   "legendWindow":   { "message": "窓に固定" },

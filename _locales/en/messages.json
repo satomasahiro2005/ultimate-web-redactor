@@ -37,6 +37,7 @@
   "btnReveal":      { "message": "Undo everything" },
 
   "sample":         { "message": "Sample text 0123" },
+  "kbdUnset":       { "message": "set a key" },
 
   "hintPick":       { "message": "click to apply / ↑ parent ↓ child / Esc to cancel" },
   "legendWindow":   { "message": "window" },
